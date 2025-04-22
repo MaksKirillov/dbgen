@@ -54,6 +54,7 @@ if __name__ == '__main__':
                                         xlsx - формат Excel;
                                         xml - eXtensible Markup Language - расширяемый язык разметки;
                                         json - JavaScript Object Notation;
+                                        html - Hyper Text Markup Language
                                         sql - скрипт sql на создание и заполнение таблицы;
                                         '''),
         formatter_class=argparse.RawDescriptionHelpFormatter)

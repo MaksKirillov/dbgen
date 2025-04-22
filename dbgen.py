@@ -7,6 +7,13 @@ import numpy as np
 import os
 from datetime import datetime, timedelta
 
+from mimesis import Person
+from mimesis import Locale
+from mimesis import Gender
+from mimesis import Address
+from mimesis import Transport
+from mimesis import Text
+from mimesis.builtins import RussiaSpecProvider
 
 def transpose(matrix: list) -> list:
     """Транспонирование матрицы"""
@@ -20,193 +27,231 @@ def set_genders(num: int) -> list:
     return gender_column
 
 
+def get_locale_from_str(lng: str) -> Locale:
+    """Определяем язык"""
+    language_lower = lng.lower()
+    match language_lower:
+        case 'ar': return Locale.AR_AE      #Arabic
+        case 'ar-ae': return Locale.AR_AE   #Arabic U.A.E
+        case 'ar-dz': return Locale.AR_DZ   #Arabic Algeria
+        case 'ar-eg': return Locale.AR_EG   #Arabic Egypt
+        case 'ar-jo': return Locale.AR_JO   #Arabic Jordan
+        case 'ar-om': return Locale.AR_OM   #Arabic Oman
+        case 'ar-sy': return Locale.AR_SY   #Arabic Syria
+        case 'ar-ye': return Locale.AR_YE   #Arabic Yemen
+        case 'cs' : return Locale.CS        #Czech
+        case 'da': return Locale.DA         #Danish
+        case 'de': return Locale.DE         #German
+        case 'de-at': return Locale.DE_AT   #Austrian German
+        case 'de-ch': return Locale.DE_CH   #Swiss German
+        case 'el': return Locale.EL         #Greek
+        case 'en': return Locale.EN         #English
+        case 'en-au': return Locale.EN_AU   #Australian English
+        case 'en-ca': return Locale.EN_CA   #Canadian English
+        case 'en-gb': return Locale.EN_GB   #British English
+        case 'es': return Locale.ES         #Spanish
+        case 'es-mx': return Locale.ES_MX   #Mexican Spanish
+        case 'et': return Locale.ET         #Estonian
+        case 'fa': return Locale.FA         #Farsi
+        case 'fi': return Locale.FI         #Finnish
+        case 'fr': return Locale.FR         #French
+        case 'hr': return Locale.HR         #Croatian
+        case 'hu': return Locale.HU         #Hungarian
+        case 'is': return Locale.IS         #Icelandic
+        case 'it': return Locale.IT         #Italian
+        case 'ja': return Locale.JA         #Japanese
+        case 'kk': return Locale.KK         #Kazakh
+        case 'ko': return Locale.KO         #Korean
+        case 'nl': return Locale.NL         #Dutch
+        case 'nl-be': return Locale.NL_BE   #Belgium Dutch
+        case 'no': return Locale.NO         #Norwegian
+        case 'pl': return Locale.PL         #Polish
+        case 'pt': return Locale.PT         #Portuguese
+        case 'pt-br': return Locale.PT_BR   #Brazilian Portuguese
+        case 'ru': return Locale.RU         #Russian
+        case 'sk': return Locale.SK         #Slovak
+        case 'sv': return Locale.SV         #Swedish
+        case 'tr': return Locale.TR         #Turkish
+        case 'uk': return Locale.UK         #Ukrainian
+        case 'zh': return Locale.ZH         #Chinese
+        case _: return Locale.EN            #Default English
+
+
 def get_gender_column(attribute: str, gender_column: list, lng: str) -> list:
     """Получаем столбик с полом"""
     parsed_attributes = attribute.split('_')
     data_column = []
     if len(parsed_attributes) == 1:
-        if lng == 'eng':
-            for gender in gender_column:
-                if gender == 'F': data_column.append('F')
-                else:             data_column.append('M')
-        if lng == 'rus':
+        if lng.lower() == 'ru':
             for gender in gender_column:
                 if gender == 'F': data_column.append('Ж')
                 else:             data_column.append('М')
-    else:
-        if lng == 'eng':
+        else:
             for gender in gender_column:
-                if gender == 'F': data_column.append('Female')
-                else:             data_column.append('Male')
-        if lng == 'rus':
+                if gender == 'F': data_column.append('F')
+                else:             data_column.append('M')
+    else:
+        if lng.lower() == 'ru':
             for gender in gender_column:
                 if gender == 'F': data_column.append('Женщина')
                 else:             data_column.append('Мужчина')
+        else:
+            for gender in gender_column:
+                if gender == 'F': data_column.append('Female')
+                else:             data_column.append('Male')
     return data_column
 
 
 def get_names_column(attribute: str, gender_column: list, lng: str) -> list:
-    """Получаем имена согласно значению аттрибута"""
-    file_first_f, file_first_m, file_last = '', '', ''
+    """Получаем список имён согласно значению аттрибута"""
     parsed_attributes = attribute.split('_')
     data_column = []
-    try:
-        file_first_f = open(f'attribute_values/{lng}/name/first_f', 'r', encoding='utf-8')
-        file_first_m = open(f'attribute_values/{lng}/name/first_m', 'r', encoding='utf-8')
-        file_last = open(f'attribute_values/{lng}/name/last', 'r', encoding='utf-8')
+    locale = get_locale_from_str(lng)
+    person = Person(locale=locale)
+    ru = RussiaSpecProvider()
 
-        lines_first_f = file_first_f.readlines()
-        lines_first_m = file_first_m.readlines()
-        lines_last = file_last.readlines()
-
-        # полное имя
-        if len(parsed_attributes) == 1 or attribute == 'name_first_patronymic_last' or attribute == 'name_full':
-            if lng == 'eng':
-                for gender in gender_column:
-                    if gender == 'F':
-                        name = random.choice(lines_first_f).strip() + ' ' \
-                               + random.choice(lines_first_f).strip() + ' '\
-                               + random.choice(lines_last).strip()
-                    else:
-                        name = random.choice(lines_first_m).strip() + ' ' \
-                               + random.choice(lines_first_m).strip() + ' ' \
-                               + random.choice(lines_last).strip()
-                    data_column.append(name)
-            if lng == 'rus':
-                for gender in gender_column:
-                    if gender == 'F':
-                        name = random.choice(lines_first_f).strip() + ' ' \
-                               + random.choice(lines_first_m).strip() + 'овна '\
-                               + random.choice(lines_last).strip() + 'а'
-                    else:
-                        name = random.choice(lines_first_m).strip() + ' ' \
-                               + random.choice(lines_first_m).strip() + 'ович ' \
-                               + random.choice(lines_last).strip()
-                    data_column.append(name)
-        # имя имеет другой формат
+    # полное имя
+    if len(parsed_attributes) == 1 or attribute == 'name_full':
+        if lng == 'ru':
+            for gender in gender_column:
+                if gender == 'F':
+                    name = person.first_name(gender=Gender.FEMALE).strip() + ' ' +\
+                           ru.patronymic(gender=Gender.FEMALE).strip() + ' ' +\
+                           person.last_name(gender=Gender.FEMALE).strip()
+                else:
+                    name = person.first_name(gender=Gender.MALE).strip() + ' ' +\
+                           ru.patronymic(gender=Gender.MALE).strip() + ' ' +\
+                           person.last_name(gender=Gender.MALE).strip()
+                data_column.append(name)
         else:
-            if lng == 'eng':
-                for gender in gender_column:
-                    name = ''
-                    if gender == 'F':
-                        for name_part in parsed_attributes:
-                            match name_part:
-                                case 'name': pass
-                                case 'first': name = name + random.choice(lines_first_f).strip() + ' '
-                                case 'last': name = name + random.choice(lines_last).strip() + ' '
-                                case 'patronymic': name = name + random.choice(lines_first_f).strip() + ' '
-                                case _: pass
-                    else:
-                        for name_part in parsed_attributes:
-                            match name_part:
-                                case 'name': pass
-                                case 'first': name = name + random.choice(lines_first_m).strip() + ' '
-                                case 'last': name = name + random.choice(lines_last).strip() + ' '
-                                case 'patronymic': name = name + random.choice(lines_first_m).strip() + ' '
-                                case _: pass
-                    data_column.append(name.strip())
-            if lng == 'rus':
-                for gender in gender_column:
-                    name = ''
-                    if gender == 'F':
-                        for name_part in parsed_attributes:
-                            match name_part:
-                                case 'name': pass
-                                case 'first': name = name + random.choice(lines_first_f).strip() + ' '
-                                case 'last': name = name + random.choice(lines_last).strip() + 'а '
-                                case 'patronymic': name = name + random.choice(lines_first_f).strip() + 'овна '
-                                case _: pass
-                    else:
-                        for name_part in parsed_attributes:
-                            match name_part:
-                                case 'name': pass
-                                case 'first': name = name + random.choice(lines_first_m).strip() + ' '
-                                case 'last': name = name + random.choice(lines_last).strip() + ' '
-                                case 'patronymic': name = name + random.choice(lines_first_m).strip() + 'ович '
-                                case _: pass
-                    data_column.append(name.strip())
-    except FileNotFoundError:
-        print(f"Файл для аттрибута {lng} {attribute} не найден.")
-    except Exception as e:
-        print(f"Произошла ошибка: {e}")
-    finally:
-        file_first_f.close()
-        file_first_m.close()
-        file_last.close()
+            for gender in gender_column:
+                if gender == 'F':
+                    name = person.full_name(gender=Gender.FEMALE).strip()
+                else:
+                    name = person.full_name(gender=Gender.MALE).strip()
+                data_column.append(name)
+    # имя имеет другой формат
+    else:
+        if lng == 'ru':
+            for gender in gender_column:
+                name = ''
+                if gender == 'F':
+                    for name_part in parsed_attributes:
+                        match name_part:
+                            case 'name':
+                                pass
+                            case 'first':
+                                name = name + person.first_name(gender=Gender.FEMALE).strip() + ' '
+                            case 'last':
+                                name = name + person.last_name(gender=Gender.FEMALE).strip() + ' '
+                            case 'patronymic':
+                                name = name + ru.patronymic(gender=Gender.FEMALE).strip() + ' '
+                            case _:
+                                pass
+                else:
+                    for name_part in parsed_attributes:
+                        match name_part:
+                            case 'name':
+                                pass
+                            case 'first':
+                                name = name + person.first_name(gender=Gender.MALE).strip() + ' '
+                            case 'last':
+                                name = name + person.last_name(gender=Gender.MALE).strip() + ' '
+                            case 'patronymic':
+                                name = name + ru.patronymic(gender=Gender.MALE).strip() + ' '
+                            case _:
+                                pass
+                data_column.append(name.strip())
+        else:
+            for gender in gender_column:
+                name = ''
+                if gender == 'F':
+                    for name_part in parsed_attributes:
+                        match name_part:
+                            case 'name':
+                                pass
+                            case 'first':
+                                name = name + person.first_name(gender=Gender.FEMALE).strip() + ' '
+                            case 'last':
+                                name = name + person.last_name(gender=Gender.FEMALE).strip() + ' '
+                            case 'patronymic':
+                                name = name + person.first_name(gender=Gender.MALE).strip() + ' '
+                            case _:
+                                pass
+                else:
+                    for name_part in parsed_attributes:
+                        match name_part:
+                            case 'name':
+                                pass
+                            case 'first':
+                                name = name + person.first_name(gender=Gender.MALE).strip() + ' '
+                            case 'last':
+                                name = name + person.last_name(gender=Gender.MALE).strip() + ' '
+                            case 'patronymic':
+                                name = name + person.first_name(gender=Gender.MALE).strip() + ' '
+                            case _:
+                                pass
+                data_column.append(name.strip())
+
     return data_column
 
 
-def get_place_columns(attribute: str, num: int, lng: str) -> list:
+def get_address_columns(attribute: str, num: int, lng: str) -> list:
     """Получаем адреса мест согласно значению аттрибута"""
-    file_country_city, file_street = '', ''
     parsed_attributes = attribute.split('_')
     data_column = []
+    locale = get_locale_from_str(lng)
+    address = Address(locale=locale)
 
-    try:
-        file_country_city = open(f'attribute_values/{lng}/place/country_city', 'r', encoding='utf-8')
-        file_street = open(f'attribute_values/{lng}/place/street', 'r', encoding='utf-8')
-
-        lines_country_city = file_country_city.readlines()
-        lines_street = file_street.readlines()
-
-        # полное название
-        # place_country_city_street_num_1_10
-        if len(parsed_attributes) == 1 or attribute == 'place_full':
-            for _ in range(num):
-                place = random.choice(lines_country_city).strip() + ', ' \
-                        + random.choice(lines_street).strip() + ', ' \
-                        + str(random.randint(1, 10))
-                data_column.append(place)
-        else:
-            for _ in range(num):
-                place = ''
-                j = 0
-                for place_part in parsed_attributes:
-                    match place_part:
-                        case 'place': pass
-                        case 'country': place = place + random.choice(lines_country_city).split(',')[0].strip() + ', '
-                        case 'city': place = place + random.choice(lines_country_city).split(',')[1].strip() + ', '
-                        case 'street': place = place + random.choice(lines_street).strip() + ', '
-                        case 'num': place = place + str(random.randint(int(parsed_attributes[j + 1]), int(parsed_attributes[j + 2]))) + ', '
-                        case _: pass
-                    j = j + 1
-                data_column.append(place.strip().rstrip(','))
-    except FileNotFoundError:
-        print(f"Файл для аттрибута {lng} {attribute} не найден.")
-    except Exception as e:
-        print(f"Произошла ошибка: {e}")
-    finally:
-        file_country_city.close()
-        file_street.close()
+    # полное название
+    # address_country_city_street_num_1_10
+    if len(parsed_attributes) == 1 or attribute == 'address_full':
+        for _ in range(num):
+            place = address.country().strip() + ', ' +\
+                    address.city().strip() + ', ' +\
+                    address.street_name().strip() + ', ' +\
+                    str(random.randint(1, 10))
+            data_column.append(place)
+    else:
+        for _ in range(num):
+            place = ''
+            j = 0
+            for place_part in parsed_attributes:
+                match place_part:
+                    case 'place':
+                        pass
+                    case 'continent':
+                        place = place + address.continent().strip() + ', '
+                    case 'country':
+                        place = place + address.country().strip() + ', '
+                    case 'city':
+                        place = place + address.city().strip() + ', '
+                    case 'street':
+                        place = place + address.street_name().strip() + ', '
+                    case 'num':
+                        place = place + str(
+                            random.randint(int(parsed_attributes[j + 1]), int(parsed_attributes[j + 2]))) + ', '
+                    case _:
+                        pass
+                j = j + 1
+            data_column.append(place.strip().rstrip(','))
 
     return data_column
 
 
-def generate_random_email(domain: str) -> str:
-    """Генерирует случайный адрес электронной почты с заданным доменом."""
-    username_length = random.randint(5, 10)
-    username = ''.join(random.choices(string.ascii_lowercase + string.digits, k=username_length))
-    return f"{username}@{domain}"
-
-def generate_random_domain() -> str:
-    """Создает случайный домен."""
-    domain_length = random.randint(3, 10)
-    tld_list = ['.com', '.net', '.org', '.ru', '.info', '.xyz']
-    domain_name = ''.join(random.choices(string.ascii_lowercase, k=domain_length))
-    return f"{domain_name}{random.choice(tld_list)}"
-
-
-def get_email_column(attribute: str, num: int) -> list:
+def get_email_column(attribute: str, num: int, lng: str) -> list:
     """Получаем электронные почты согласно значению атрибута"""
     parsed_attributes = attribute.split('_')
     data_column = []
+    locale = get_locale_from_str(lng)
+    person = Person(locale=locale)
 
     for _ in range(num):
         if len(parsed_attributes) > 1:
             domain = parsed_attributes[1].lstrip('@')
+            data_column.append(person.email(domains=[domain]))
         else:
-            domain = generate_random_domain()
-        data_column.append(generate_random_email(domain))
+            data_column.append(person.email())
 
     return data_column
 
@@ -232,8 +277,9 @@ def get_date_column(attribute: str, num: int) -> list:
 
 def get_phone_column(attribute: str, num: int) -> list:
     """Получаем телефоны согласно значению аттрибута"""
+    person = Person(locale=Locale.EN)
+
     data_column = []
-    num_of_numbers = 7
     country_code = '7'
     region_code = '987'
     if len(attribute.split('_')) == 1:
@@ -241,22 +287,16 @@ def get_phone_column(attribute: str, num: int) -> list:
     else:
         country_code = attribute.split('_')[1]
         region_code = attribute.split('_')[2]
-        if attribute.split('_')[3] != 'r':
-            num_of_numbers = int(attribute.split('_')[3])
 
     for _ in range(num):
         if len(attribute.split('_')) != 1:
             if attribute.split('_')[1] == 'r': country_code = random.choice('123456789')
             if attribute.split('_')[2] == 'r': region_code = ''.join(random.choices('123456789', k=3))
-            if attribute.split('_')[3] == 'r': num_of_numbers = int(random.choice('56789'))
         else:
             country_code = random.choice('123456789')
             region_code = ''.join(random.choices('123456789', k=3))
-            num_of_numbers = int(random.choice('56789'))
 
-        local_number = ''.join(random.choices('0123456789', k=num_of_numbers))
-        phone_number = f"+{country_code} ({region_code}) {local_number}"
-        data_column.append(phone_number)
+        data_column.append(person.phone_number(mask=f"{country_code}-({region_code})-###-####"))
 
     return data_column
 
@@ -312,26 +352,170 @@ def get_string_column(attribute: str, num: int) -> list:
     return data_column
 
 
-def get_file_column(path: str, num: int, lng: str) -> list:
-    """Получаем названия из файла"""
-    file = ''
+def get_car_column(attribute: str, num:int, lng:str) -> list:
+    """Возвращаем лист моделей авто, номеров авто или производителей"""
     data_column = []
+    locale = get_locale_from_str(lng)
+    transport = Transport()
 
-    try:
-        file = open(f'attribute_values/{lng}/{path}', 'r', encoding='utf-8')
-        lines_file = file.readlines()
-        for _ in range(num): data_column.append(random.choice(lines_file).strip())
-    except FileNotFoundError:
-        print(f"Файл для аттрибута {lng} animal name не найден.")
-    except Exception as e:
-        print(f"Произошла ошибка: {e}")
-    finally:
-        file.close()
+    if '_' in attribute:
+        if attribute.split('_')[1] == 'brand':
+            for _ in range(num):
+                data_column.append(transport.car())
+        elif attribute.split('_')[1] == 'number':
+            for _ in range(num):
+                data_column.append(transport.vehicle_registration_code(locale=locale))
+        elif attribute.split('_')[1] == 'manufacturer':
+            for _ in range(num):
+                data_column.append(transport.manufacturer())
+        else:
+            for _ in range(num):
+                data_column.append(transport.car())
+    else:
+        for _ in range(num):
+            data_column.append(transport.car())
+
+    return data_column
+
+
+def get_airplane_column(num:int) -> list:
+    """Возвращаем лист моделей самолётов"""
+    data_column = []
+    transport = Transport()
+
+    for _ in range(num):
+        data_column.append(transport.airplane())
+
+    return data_column
+
+
+def get_education_column(num: int, lng: str) -> list:
+    """Получаем электронные почты согласно значению атрибута"""
+    data_column = []
+    locale = get_locale_from_str(lng)
+    person = Person(locale=locale)
+
+    for _ in range(num):
+        data_column.append(person.university())
+
+    return data_column
+
+
+def get_occupation_column(num: int, lng: str) -> list:
+    """Получаем электронные почты согласно значению атрибута"""
+    data_column = []
+    locale = get_locale_from_str(lng)
+    person = Person(locale=locale)
+
+    for _ in range(num):
+        data_column.append(person.occupation())
+
+    return data_column
+
+
+def get_color_column(num: int, lng: str) -> list:
+    """Получаем список цветов"""
+    data_column = []
+    locale = get_locale_from_str(lng)
+    text = Text(locale=locale)
+
+    for _ in range(num):
+        data_column.append(text.color())
+
+    return data_column
+
+
+def get_bic_column(num: int) -> list:
+    """Получаем список БИК"""
+    data_column = []
+    ru = RussiaSpecProvider()
+
+    for _ in range(num):
+        data_column.append(ru.bic())
+
+    return data_column
+
+
+def get_inn_column(num: int) -> list:
+    """Получаем список ИНН"""
+    data_column = []
+    ru = RussiaSpecProvider()
+
+    for _ in range(num):
+        data_column.append(ru.inn())
+
+    return data_column
+
+
+def get_kpp_column(num: int) -> list:
+    """Получаем список КПП"""
+    data_column = []
+    ru = RussiaSpecProvider()
+
+    for _ in range(num):
+        data_column.append(ru.kpp())
+
+    return data_column
+
+
+def get_ogrn_column(num: int) -> list:
+    """Получаем список ОГРН"""
+    data_column = []
+    ru = RussiaSpecProvider()
+
+    for _ in range(num):
+        data_column.append(ru.ogrn())
+
+    return data_column
+
+
+def get_snils_column(num: int) -> list:
+    """Получаем список СНИЛС"""
+    data_column = []
+    ru = RussiaSpecProvider()
+
+    for _ in range(num):
+        data_column.append(ru.snils())
+
+    return data_column
+
+
+def get_postal_column(num: int, lng: str) -> list:
+    """Получаем список почтовых кодов"""
+    data_column = []
+    locale = get_locale_from_str(lng)
+    address = Address(locale=locale)
+
+    for _ in range(num):
+        data_column.append(address.postal_code())
+
+    return data_column
+
+
+def get_passport_column(attribute: str, num:int) -> list:
+    """Возвращаем лист моделей авто, номеров авто или производителей"""
+    data_column = []
+    ru = RussiaSpecProvider()
+
+    if '_' in attribute:
+        if attribute.split('_')[1] == 'number':
+            for _ in range(num):
+                data_column.append(ru.passport_number())
+        elif attribute.split('_')[1] == 'series':
+            for _ in range(num):
+                data_column.append(ru.passport_series())
+        else:
+            for _ in range(num):
+                data_column.append(ru.series_and_number())
+    else:
+        for _ in range(num):
+            data_column.append(ru.series_and_number())
 
     return data_column
 
 
 def remove_random_elements(data_column: list, blank_percentage: int) -> list:
+    """Убираем рандомные элементы в списке процентно"""
     num_to_remove = int(len(data_column) * (blank_percentage / 100))
     indices_to_remove = np.random.choice(len(data_column), num_to_remove, replace=False)
     modified_data_column = data_column.copy()
@@ -348,8 +532,8 @@ def get_generated_data(attributes: list, num: int, lng: str, blanks: list) -> li
         parsed_attributes = attribute.split('_')
         match parsed_attributes[0]:
             case 'name': data_column = get_names_column(attribute, genders, lng)
-            case 'place': data_column = get_place_columns(attribute, num, lng)
-            case 'email': data_column = get_email_column(attribute, num)
+            case 'address': data_column = get_address_columns(attribute, num, lng)
+            case 'email': data_column = get_email_column(attribute, num, lng)
             case 'date': data_column = get_date_column(attribute, num)
             case 'phone': data_column = get_phone_column(attribute, num)
             case 'gender': data_column = get_gender_column(attribute, genders, lng)
@@ -357,14 +541,18 @@ def get_generated_data(attributes: list, num: int, lng: str, blanks: list) -> li
             case 'float': data_column = get_float_column(attribute, num)
             case 'boolean': data_column = get_boolean_column(attribute, num)
             case 'string': data_column = get_string_column(attribute, num)
-            case 'animal':
-                if parsed_attributes[1] == 'name': data_column = get_file_column('animal/name', num, lng)
-                elif parsed_attributes[1] == 'species': data_column = get_file_column('animal/species', num, lng)
-                else: raise TypeError('Нет такого типа у аттрибутов animal')
-            case 'car': data_column = get_file_column('car_brand', num, lng)
-            case 'education': data_column = get_file_column('education', num, lng)
-            case 'occupation': data_column = get_file_column('occupation', num, lng)
-            case 'color': data_column = get_file_column('color', num, lng)
+            case 'car': data_column = get_car_column(attribute, num, lng)
+            case 'airplane': data_column = get_airplane_column(num)
+            case 'education': data_column = get_education_column(num, lng)
+            case 'occupation': data_column = get_occupation_column(num, lng)
+            case 'color': data_column = get_color_column(num, lng)
+            case 'bic': data_column = get_bic_column(num)
+            case 'inn': data_column = get_inn_column(num)
+            case 'kpp': data_column = get_kpp_column(num)
+            case 'ogrn': data_column = get_ogrn_column(num)
+            case 'snils': data_column = get_snils_column(num)
+            case 'postal': data_column = get_postal_column(num, lng)
+            case 'passport': data_column = get_passport_column(attribute, num)
             case _: raise TypeError(f'Нет типа {parsed_attributes[0]} у аттрибутов')
         data.append(remove_random_elements(data_column, blank_pr))
     return transpose(data)
@@ -387,38 +575,51 @@ if __name__ == '__main__':
                                                                  полного имени;
                                     name или name_full - другой вариант полного имени;
                                     -------------------------------
-                                    place_country - страна;
-                                    place_city - город;
-                                    place_street - название улицы;
-                                    place_num_n1_n2 - случайный номер улицы от n1 до n2;
-                                    place_country_city_street_num_n1_n2 - пример совмещения для получения
+                                    address_continent - континент;
+                                    address_country - страна;
+                                    address_city - город;
+                                    address_street - название улицы;
+                                    address_num_n1_n2 - случайный номер улицы от n1 до n2;
+                                    address_country_city_street_num_n1_n2 - пример совмещения для получения
                                                                           полного названия;
-                                    place или place_full - другой вариант полного названия;
+                                    address или address_full - другой вариант полного названия;
                                     -------------------------------
                                     email - электронная почта с разными случайными доменами;
-                                    email_@mail.ru - адрес почты заканчивается на домен @mail.ru
+                                    email_mail.ru - адрес почты заканчивается на домен @mail.ru
                                     -------------------------------
                                     date - дата от 01.01.2000 до 12.12.2010;
                                     date_dd.mm.yyyy_dd.mm.yyyy - дата от dd.mm.yyyy до dd.mm.yyyy;
                                     -------------------------------
                                     phone - телефон со всеми случайными значениями;
-                                    phone_c_r_r - телефон, где c - код страны, код региона - случайный;
-                                    phone_r_a_r - телефон, где a - код зоны, код страны - случайный;
-                                    phone_r_r_n - телефон, n - кол-во цифр после кодов, коды - случайный;
-                                    phone_r_r_r - телефон со всеми случайными значениями;
-                                    phone_c_a_n - телефон, где:
+                                    phone_c_r - телефон, где c - код страны, код региона - случайный;
+                                        Пример: phone_7_r
+                                    phone_r_a - телефон, где a - код зоны, код страны - случайный;
+                                        Пример: phone_r_987
+                                    phone_r_r - телефон со всеми случайными значениями;
+                                    phone_c_a - телефон, где:
                                                     c - код страны
                                                     a - код зоны
-                                                    n - кол-во цифр после кодов;
+                                        Пример: phone_7_987
                                     -------------------------------
                                     gender - пол в виде F/M или М/Ж;
                                     gender_full - пол в виде Female/Male или Мужчина/Женщина
                                     -------------------------------
-                                    animal_name - кличка животного;
-                                    animal_species - вид животного;
-                                    ------------------------------
+                                    bic - банковский код;
+                                    inn - идентификационный номер налогоплательщика (ИНН)
+                                    kpp - код причины постановки на учёт (КПП)
+                                    ogrn - основной государственный регистрационный номер (ОГРН)
+                                    snils - страховой номер индивидуального лицевого счёта (СНИЛС)
+                                    postal - почтовый код 
+                                    -------------------------------
+                                    passport - серия и номер паспорта
+                                    passport_number - номер паспорта
+                                    passport_series - серия паспорта
+                                    -------------------------------
                                     car_brand - марка авто;
                                     car_number - номер авто;
+                                    car_manufacturer - производитель авто;
+                                    -------------------------------
+                                    airplane - модель самолёта
                                     -------------------------------
                                     education - место образования;
                                     occupation - место работы;
@@ -439,7 +640,7 @@ if __name__ == '__main__':
 
     parser.add_argument('-n', '--names', nargs='+', type=str, help='Названия аттрибутов в таблице, массив str;')
     parser.add_argument('-t', '--types', nargs='+', type=str, help='Типы аттрибутов в таблице, массив str;')
-    parser.add_argument('-l', '--language', type=str, help='Язык таблицы базы данных: eng - Английский, rus - Русский;')
+    parser.add_argument('-l', '--language', type=str, help='Язык таблицы базы данных: en - Английский, ru - Русский;')
     parser.add_argument('-k', '--number',  type=int, help='Количество кортежей в таблице базы данных, int;')
     parser.add_argument('-b', '--blank', nargs='+', type=int, help='Процент пустых данных от 0 до 100;')
     parser.add_argument('-s', '--save', type=str, help='Сохранить таблицу в формате .feather по указанному пути.')
@@ -461,11 +662,14 @@ if __name__ == '__main__':
     """Проверка аргумента - язык БД"""
 
     if args.language is None:
-        language = 'eng'
+        language = 'en'
     else:
         language = args.language
-        if language not in ['rus', 'eng']:
-            raise ValueError("Неизвестный язык, используйте 'eng' или 'rus'")
+        if language not in ['ar', 'ar-ae', 'ar-dz', 'ar-eg', 'ar-jo', 'ar-om', 'ar-sy', 'ar-ye', 'cs', 'da', 'de',
+                            'de-at', 'de-ch', 'el', 'en', 'en-au', 'en-ca', 'en-gb', 'es', 'es-mx', 'et', 'fa', 'fi',
+                            'fr', 'hr', 'hu', 'is', 'it', 'ja', 'kk', 'ko', 'nl', 'nl-be', 'no', 'pl', 'pt', 'pt-br',
+                            'ru', 'sk', 'sv', 'tr', 'uk', 'zh']:
+            raise ValueError("Неизвестный язык, используйте, например, 'en' или 'ru'")
 
     """Проверка названий и типов аттрибутов"""
 

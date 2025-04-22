@@ -149,7 +149,7 @@ if __name__ == '__main__':
         raise ValueError("Кол-во кортежей должно быть больше 0")
 
 
-    """Проверка названий аттрибутов"""
+    """Проверка названий атрибутов"""
 
     if args.names_1 is None and args.names_2 is None:
         attr_names_1 = list(df_1)
